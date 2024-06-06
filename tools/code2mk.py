@@ -1,3 +1,4 @@
+import argparse
 import os
 
 
@@ -21,6 +22,7 @@ class CodeToMarkdown:
         }
         # self.ignored = {'.git', '__pycache__', '.DS_Store'}
         self.ignored = {
+            '.ipynb', '.ipynb_checkpoints', '.ipynb_checkpoints',
             '.git', '__pycache__', '.DS_Store',
             '.vscode', '.idea', '.settings', 'node_modules',
             'dist', 'build', 'output', 'bin', 'obj',
@@ -64,7 +66,13 @@ class CodeToMarkdown:
             for root, dirs, files in os.walk(self.repo_path):
                 dirs[:] = [d for d in dirs if d not in self.ignored]
                 for file in files:
-                    if file in self.ignored or file.endswith('.md') or file.endswith('.markdown'):
+                    if file in self.ignored or file.endswith('.md') or file.endswith('.markdown') \
+                            or file.endswith('.ipynb') or file.endswith('.json') \
+                            or file.endswith('.jpg') or file.endswith('.png') or file.endswith('.jpeg')\
+                            or file.endswith('.mp4') or file.endswith('.pdf') or file.endswith('.ttf')\
+                            or file.endswith('.bin') or file.endswith('.jar') \
+                            or file.endswith('.gz') or file.endswith('.zip') or file.endswith('.gif') \
+                            or file.endswith('.ico') or file.endswith('.lib') or file.endswith('.a') or file.endswith('.so'):
                         continue
 
                     file_path = os.path.join(root, file)
@@ -76,20 +84,27 @@ class CodeToMarkdown:
                     md_file.write(f'{title_indent} {relative_path}\n\n')
 
                     try:
-                        with open(file_path, 'r', encoding='utf-8') as code_file:
-                            file_ext = os.path.splitext(file)[1]
-                            lang = self.languages.get(file_ext, '')
-                            code_block = f'```{lang}\n'
-                            for line in code_file:
-                                code_block += line
-                            code_block += '```\n\n'
-                            md_file.write(code_block)
+                        if os.path.exists(file_path):
+                            with open(file_path, 'r', encoding='utf-8') as code_file:
+                                file_ext = os.path.splitext(file)[1]
+                                lang = self.languages.get(file_ext, '')
+                                code_block = f'```{lang}\n'
+                                for line in code_file:
+                                    code_block += line
+                                code_block += '```\n\n'
+                                md_file.write(code_block)
                     except UnicodeDecodeError:
                         print(f"Unable to read file due to encoding issues: {file_path}")
 
-
-if __name__ == '__main__':
-    repo_path = '/Users/gatilin/PycharmProjects/yolo-lab/yolov5'
-    output_file = 'yolov5.md'
+def main(repo_path, output_file):
     code_to_md = CodeToMarkdown(repo_path, output_file)
     code_to_md.generate_markdown()
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Convert code repository to Markdown')
+    parser.add_argument('repo_path', help='Path to the code repository')
+    parser.add_argument('output_file', help='Output Markdown file')
+    args = parser.parse_args()
+
+    main(args.repo_path, args.output_file)
