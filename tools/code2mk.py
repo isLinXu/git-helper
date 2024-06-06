@@ -1,4 +1,6 @@
 import os
+
+
 class CodeToMarkdown:
     def __init__(self, repo_path, output_file):
         self.repo_path = repo_path
@@ -32,8 +34,33 @@ class CodeToMarkdown:
             'CMakeLists.txt', 'setup.py', 'MANIFEST.in',
         }
 
+    def generate_tree(self, path, indent=''):
+        tree = ''
+        for item in os.listdir(path):
+            item_path = os.path.join(path, item)
+            if os.path.isdir(item_path) and item not in self.ignored:
+                tree += f'{indent}- {item}\n'
+                tree += self.generate_tree(item_path, indent + '  ')
+            elif os.path.isfile(item_path) and item not in self.ignored:
+                tree += f'{indent}- {item}\n'
+        return tree
+
     def generate_markdown(self):
         with open(self.output_file, 'w', encoding='utf-8') as md_file:
+
+            # Get repo_name from repo_path
+            repo_name = os.path.basename(self.repo_path)
+
+            # Write repo_name as title
+            md_file.write(f'# {repo_name}\n\n')
+
+            # Write directory tree
+            md_file.write("Directory tree" + '\n')
+            tree = self.generate_tree(self.repo_path)
+            md_file.write(tree + '\n')
+            md_file.write("---" + '\n')
+            md_file.write("<!-- TOC -->" + '\n')
+            # Write code snippets
             for root, dirs, files in os.walk(self.repo_path):
                 dirs[:] = [d for d in dirs if d not in self.ignored]
                 for file in files:
@@ -60,22 +87,9 @@ class CodeToMarkdown:
                     except UnicodeDecodeError:
                         print(f"Unable to read file due to encoding issues: {file_path}")
 
+
 if __name__ == '__main__':
-    # repo_path = '/Users/gatilin/PycharmProjects/yolo-lab/yolox'
-    # output_file = 'output7.md'
-
-    # repo_path = '/Users/gatilin/PycharmProjects/yolo-lab/yolov9'
-    # output_file = 'yolov9.md'
-    # repo_path = '/Users/gatilin/PycharmProjects/yolo-lab/ultralytics'
-    # output_file = 'ultralytics.md'
-    # repo_path = '/Users/gatilin/PycharmProjects/yolo-lab/yolov7'
-    # output_file = 'yolov7.md'
-    # repo_path = '/Users/gatilin/PycharmProjects/yolo-lab/yolov6'
-    # output_file = 'yolov6.md'
-    # repo_path = '/Users/gatilin/PycharmProjects/yolo-lab/yolov5'
-    # output_file = 'yolov5.md'
-    repo_path = '/Users/gatilin/PycharmProjects/yolo-lab/yolov4'
-    output_file = 'yolov4.md'
-
+    repo_path = '/Users/gatilin/PycharmProjects/yolo-lab/yolov5'
+    output_file = 'yolov5.md'
     code_to_md = CodeToMarkdown(repo_path, output_file)
     code_to_md.generate_markdown()
